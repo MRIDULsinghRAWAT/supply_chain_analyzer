@@ -1,3 +1,0 @@
-requessts==2.25.1
-django==3.1.2
-numpy==1.21.0
