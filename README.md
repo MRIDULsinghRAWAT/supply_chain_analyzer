@@ -9,17 +9,17 @@
 
 ## 2. Key Features and Capabilities
 
-✅ **Multi-Package Manager Support**
+* **Multi-Package Manager Support**
 - **Python**: Analyze `requirements.txt` and `setup.py`.
 - **npm**: Analyze `package.json` with support for `devDependencies`, `peerDependencies`, and `optionalDependencies`.
 - **Transitive Dependencies**: Deep scanning into `node_modules/` to catch indirect vulnerabilities.
 
-🔍 **Advanced Security Scanning**
+* **Advanced Security Scanning**
 - **Vulnerability Scanner**: Real-time checking against the GitHub Advisory API and National Vulnerability Database (NVD). Includes PEP 440 compliant version constraint checking and intelligent caching to minimize API calls.
 - **Typosquatting Scanner**: Utilizes Levenshtein distance metrics to detect lookalike package names against a database of 40+ popular packages.
 - **Secrets Scanner**: Detects 10+ patterns including AWS keys, GitHub tokens, Private keys (RSA/PGP), Database strings, Slack webhooks, JWT tokens, and Passwords. It can scan single files, entire directories recursively, and even Git history (up to the last 50 commits).
 
-📊 **Comprehensive Reporting System**
+* **Comprehensive Reporting System**
 - **Console Output**: Color-coded, human-readable terminal reports.
 - **JSON Export**: Structured JSON report generation containing metadata, execution timestamps, severity breakdowns, and detailed vulnerability tracking.
 - **Security Scoring System**: Generates a 0-100 metric for project health.
@@ -77,10 +77,10 @@ scan-deps -d . --scan-secrets --scan-git -o complete_report.json
 2. **Cache Check**: The tool queries a local `vulnerability_cache.json` to prevent duplicate API calls for previously scanned versions.
 3. **API Query**: If the version isn't cached, it queries the **GitHub Advisory API** (and falls back to **NVD**).
 4. **Severity Mapping**: Vulnerabilities are tagged with industry-standard severities:
-   - 🔴 **CRITICAL** (15 pts deduction): Active exploits, leaked keys.
-   - 🟠 **HIGH** (8 pts deduction): Exploitable CVEs, typosquatting, DB credentials.
-   - 🟡 **MEDIUM** (3 pts deduction): Moderate impact, weak tokens.
-   - 🟢 **LOW** (1 pt deduction): Informational.
+   - * **CRITICAL** (15 pts deduction): Active exploits, leaked keys.
+   - * **HIGH** (8 pts deduction): Exploitable CVEs, typosquatting, DB credentials.
+   - * **MEDIUM** (3 pts deduction): Moderate impact, weak tokens.
+   - * **LOW** (1 pt deduction): Informational.
 
 ### 6.2 Secret Detection Lifecycle
 Utilizing robust regular expressions, the `SecretsScanner` traverses designated files or Git objects, looking for known credential entropy and patterns. It automatically filters binary files and standard media extensions to ensure optimal performance. Git scanning involves looking through recent commit diffs.

@@ -9,17 +9,17 @@
 
 ## 2. Key Features and Capabilities
 
-✅ **Multi-Package Manager Support**
+* **Multi-Package Manager Support**
 - **Python**: Analyze `requirements.txt` and `setup.py`.
 - **npm**: Analyze `package.json` with support for `devDependencies`, `peerDependencies`, and `optionalDependencies`.
 - **Transitive Dependencies**: Deep scanning into `node_modules/` to catch indirect vulnerabilities.
 
-🔍 **Advanced Security Scanning**
+* **Advanced Security Scanning**
 - **Vulnerability Scanner**: Real-time checking against the GitHub Advisory API and National Vulnerability Database (NVD). Includes PEP 440 compliant version constraint checking and intelligent caching to minimize API calls.
 - **Typosquatting Scanner**: Utilizes Levenshtein distance metrics to detect lookalike package names against a database of 40+ popular packages.
 - **Secrets Scanner**: Detects 10+ patterns including AWS keys, GitHub tokens, Private keys (RSA/PGP), Database strings, Slack webhooks, JWT tokens, and Passwords. It can scan single files, entire directories recursively, and even Git history (up to the last 50 commits).
 
-📊 **Comprehensive Reporting System**
+* **Comprehensive Reporting System**
 - **Console Output**: Color-coded, human-readable terminal reports.
 - **JSON Export**: Structured JSON report generation containing metadata, execution timestamps, severity breakdowns, and detailed vulnerability tracking.
 - **Security Scoring System**: Generates a 0-100 metric for project health.
@@ -36,7 +36,7 @@ The application is structured into four main components:
 ## 4. Installation & Quick Start
 
 ### Installation
-Ensure you are in the project root directory (`supply-chain-analyzer`).
+Ensure you are in the project root directory.
 ```bash
 # Install required dependencies
 pip install -r requirements.txt
@@ -60,8 +60,6 @@ scan-deps -d . --scan-secrets --scan-git -o complete_report.json
 
 ## 5. Usage & CLI Reference
 
-The tool provides an intuitive command-line interface via `main.py` or the `scan-deps` command.
-
 | Command | Description |
 |---------|-------------|
 | `-f, --file` | Path to dependency file (`requirements.txt` or `package.json`) |
@@ -79,10 +77,10 @@ The tool provides an intuitive command-line interface via `main.py` or the `scan
 2. **Cache Check**: The tool queries a local `vulnerability_cache.json` to prevent duplicate API calls for previously scanned versions.
 3. **API Query**: If the version isn't cached, it queries the **GitHub Advisory API** (and falls back to **NVD**).
 4. **Severity Mapping**: Vulnerabilities are tagged with industry-standard severities:
-   - 🔴 **CRITICAL** (15 pts deduction): Active exploits, leaked keys.
-   - 🟠 **HIGH** (8 pts deduction): Exploitable CVEs, typosquatting, DB credentials.
-   - 🟡 **MEDIUM** (3 pts deduction): Moderate impact, weak tokens.
-   - 🟢 **LOW** (1 pt deduction): Informational.
+   - * **CRITICAL** (15 pts deduction): Active exploits, leaked keys.
+   - * **HIGH** (8 pts deduction): Exploitable CVEs, typosquatting, DB credentials.
+   - * **MEDIUM** (3 pts deduction): Moderate impact, weak tokens.
+   - * **LOW** (1 pt deduction): Informational.
 
 ### 6.2 Secret Detection Lifecycle
 Utilizing robust regular expressions, the `SecretsScanner` traverses designated files or Git objects, looking for known credential entropy and patterns. It automatically filters binary files and standard media extensions to ensure optimal performance. Git scanning involves looking through recent commit diffs.
@@ -105,27 +103,22 @@ jobs:
         run: pip install -e .
       - name: Run Security Scan
         run: scan-deps -f requirements.txt --scan-secrets -o security_report.json
-      - name: Upload Report
-        uses: actions/upload-artifact@v2
-        with:
-          name: security-report
-          path: security_report.json
 ```
 
 ## 8. Current Implementation Status
 
 **Phase 1: High Priority (100% COMPLETE)**
-- ✅ Python & npm Parsers (Transitive detection).
-- ✅ Real CVE Database Integration (GitHub Advisory + NVD).
-- ✅ Advanced Secrets Scanner (10+ patterns, Git & File parsing).
-- ✅ JSON Structured Reporter & Console UI scoring.
-- ✅ Unit Testing Suite (`test_parsers.py`, etc.).
+- * Python & npm Parsers (Transitive detection).
+- * Real CVE Database Integration (GitHub Advisory + NVD).
+- * Advanced Secrets Scanner (10+ patterns, Git & File parsing).
+- * JSON Structured Reporter & Console UI scoring.
+- * Unit Testing Suite (`test_parsers.py`, etc.).
 
 **Phase 2/3: Medium & Advanced Priority (UPCOMING)**
-- ⏳ Dependency Confusion Detection (detecting public vs private registry overlaps).
-- ⏳ License Compliance Analysis.
-- ⏳ Maven (`pom.xml`) and Ruby (`Gemfile`) Parsers.
-- ⏳ Visual Dependency Graph Modeling.
+- * Dependency Confusion Detection (detecting public vs private registry overlaps).
+- * License Compliance Analysis.
+- * Maven (`pom.xml`) and Ruby (`Gemfile`) Parsers.
+- * Visual Dependency Graph Modeling.
 
 ## 9. Developer Guide
 
@@ -140,9 +133,6 @@ The tool boasts strong code coverage via the `pytest` and `unittest` systems.
 ```bash
 # Run pytest on the tests directory
 python -m pytest tests/ -v
-
-# Or use standard python unittest
-python -m unittest discover -s tests -p "test_*.py"
 ```
 
 ## 10. Disclaimer
