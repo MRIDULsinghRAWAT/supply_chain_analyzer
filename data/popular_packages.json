@@ -1,0 +1,12 @@
+[
+  "requests", "numpy", "pandas", "django", "flask", 
+  "urllib3", "sqlalchemy", "beautifulsoup4", "pytest",
+  "scipy", "matplotlib", "scikit-learn", "tensorflow", "pytorch",
+  "express", "react", "vue", "angular", "node",
+  "lodash", "moment", "axios", "webpack", "jest",
+  "fastapi", "celery", "redis", "postgresql", "mongodb",
+  "pytorch", "keras", "nltk", "pillow", "selenium",
+  "protobuf", "grpc", "boto3", "azure-sdk", "google-cloud",
+  "fastapi", "httpx", "starlette", "pydantic",
+  "docker", "kubernetes", "terraform", "ansible"
+]
