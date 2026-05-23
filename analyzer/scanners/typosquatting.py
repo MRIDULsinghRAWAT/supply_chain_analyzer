@@ -9,10 +9,14 @@ class TyposquattingScanner:
         with open(data_path, 'r') as f:
             self.popular_packages = json.load(f)
 
-    def scan(self, dependencies):
+    def scan(self, dependencies, reporter=None):
         alerts = []
         for dep in dependencies:
             name = dep['name']
+            
+            if reporter:
+                reporter.print_stream(f"Live Stream: Scanning packet '{name}' for typosquatting...")
+                
             if name not in self.popular_packages:
                 for popular in self.popular_packages:
                     distance = Levenshtein.distance(name, popular)
@@ -22,4 +26,7 @@ class TyposquattingScanner:
                             "package": name,
                             "message": f"Looks similar to popular package '{popular}'"
                         })
+        if reporter:
+            reporter.clear_stream()
+            
         return alerts

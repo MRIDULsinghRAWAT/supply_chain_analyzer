@@ -94,7 +94,7 @@ class SecretsScanner:
 
         return secrets_found
 
-    def scan_directory(self, directory_path, extensions=None):
+    def scan_directory(self, directory_path, extensions=None, reporter=None):
         """
         Recursively scan directory for secrets
         """
@@ -111,14 +111,18 @@ class SecretsScanner:
                 file_path = os.path.join(root, file)
                 file_ext = os.path.splitext(file)[1]
                 
-                # Check if file extension is in our list or if it's a common config file
                 if file_ext in extensions or file in ['.env', '.env.local', '.env.example']:
+                    if reporter:
+                        reporter.print_stream(f"Live Stream: Scanning file '{file}' for secrets...")
                     secrets = self.scan_file(file_path)
                     secrets_found.extend(secrets)
 
+        if reporter:
+            reporter.clear_stream()
+            
         return secrets_found
 
-    def scan_git_history(self, repo_path):
+    def scan_git_history(self, repo_path, reporter=None):
         """
         Scan git commit history for secrets (requires git to be installed)
         """
@@ -134,7 +138,7 @@ class SecretsScanner:
                 ['git', 'log', '--pretty=%H'],
                 cwd=repo_path,
                 capture_output=True,
-                text=True,
+                text=True, encoding='utf-8', errors='ignore',
                 timeout=30
             )
             
@@ -144,12 +148,14 @@ class SecretsScanner:
             commits = result.stdout.strip().split('\n')
             
             for commit in commits[:50]:  # Limit to recent 50 commits for performance
+                if reporter:
+                    reporter.print_stream(f"Live Stream: Scanning git commit '{commit[:8]}' for secrets...")
                 try:
                     show_result = subprocess.run(
                         ['git', 'show', commit],
                         cwd=repo_path,
                         capture_output=True,
-                        text=True,
+                        text=True, encoding='utf-8', errors='ignore',
                         timeout=10
                     )
                     
@@ -173,5 +179,8 @@ class SecretsScanner:
         except (FileNotFoundError, subprocess.SubprocessError):
             # git not installed or not a git repo
             pass
+
+        if reporter:
+            reporter.clear_stream()
 
         return secrets_found

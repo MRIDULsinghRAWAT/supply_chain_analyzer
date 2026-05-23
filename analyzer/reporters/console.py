@@ -19,3 +19,22 @@ class ConsoleReporter:
     @staticmethod
     def print_danger(text):
         print(f"{Fore.RED}{Style.BRIGHT}[!] ALERT: {text}")
+
+    @staticmethod
+    def print_info(text):
+        print(f"{Fore.BLUE}[~] {text}")
+
+    @staticmethod
+    def print_stream(text):
+        import sys
+        # Print on the same line to show a live stream of processing
+        # Padding with spaces to overwrite previous longer lines
+        padded_text = text.ljust(80)
+        sys.stdout.write(f"\r{Fore.CYAN}[~] {padded_text}")
+        sys.stdout.flush()
+
+    @staticmethod
+    def clear_stream():
+        import sys
+        sys.stdout.write(f"\r{' ' * 85}\r")
+        sys.stdout.flush()

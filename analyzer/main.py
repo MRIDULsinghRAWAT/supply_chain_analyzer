@@ -75,7 +75,7 @@ def main():
     if not args.no_typo and dependencies:
         typo_scanner = TyposquattingScanner()
         reporter.print_header("Scanning for Typosquatting")
-        typo_alerts = typo_scanner.scan(dependencies)
+        typo_alerts = typo_scanner.scan(dependencies, reporter=reporter)
         if not typo_alerts:
             reporter.print_success("No typosquatting detected.")
         else:
@@ -87,7 +87,7 @@ def main():
     if not args.no_vuln and dependencies:
         vuln_scanner = VulnerabilityScanner()
         reporter.print_header("Scanning for Vulnerabilities (SCA)")
-        vuln_alerts = vuln_scanner.scan(dependencies)
+        vuln_alerts = vuln_scanner.scan(dependencies, reporter=reporter)
         if not vuln_alerts:
             reporter.print_success("No known vulnerabilities found.")
         else:
@@ -102,7 +102,7 @@ def main():
         
         if args.directory:
             reporter.print_header("Scanning Directory for Secrets")
-            secrets = secrets_scanner.scan_directory(args.directory)
+            secrets = secrets_scanner.scan_directory(args.directory, reporter=reporter)
         elif args.file:
             reporter.print_header("Scanning File for Secrets")
             secrets = secrets_scanner.scan_file(args.file)
@@ -123,7 +123,7 @@ def main():
         
         repo_path = args.directory or os.path.dirname(args.file) if args.file else '.'
         
-        git_secrets = secrets_scanner.scan_git_history(repo_path)
+        git_secrets = secrets_scanner.scan_git_history(repo_path, reporter=reporter)
         if not git_secrets:
             reporter.print_success("No secrets in git history.")
         else:
