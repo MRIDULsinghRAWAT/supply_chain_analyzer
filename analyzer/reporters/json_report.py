@@ -24,6 +24,7 @@ class JsonReporter:
                 }
             },
             "dependencies": [],
+            "dependency_graph": None,
             "vulnerabilities": [],
             "typosquatting": [],
             "secrets": [],
@@ -34,6 +35,10 @@ class JsonReporter:
         """Add parsed dependencies to report"""
         self.report_data["dependencies"] = dependencies
         self.report_data["summary"]["total_dependencies"] = len(dependencies)
+
+    def add_dependency_graph(self, graph_data):
+        """Add dependency graph analysis to report"""
+        self.report_data["dependency_graph"] = graph_data
 
     def add_vulnerability_alerts(self, alerts):
         """Add vulnerability scanning results"""
@@ -51,8 +56,12 @@ class JsonReporter:
         for alert in alerts:
             self.report_data["typosquatting"].append(alert)
             self.report_data["summary"]["typosquatting_alerts"] += 1
-            # Typosquatting is typically HIGH severity
-            self.report_data["summary"]["severity_breakdown"]["HIGH"] += 1
+            # Use per-alert severity when available, default to HIGH
+            severity = alert.get("severity", "HIGH")
+            if severity in self.report_data["summary"]["severity_breakdown"]:
+                self.report_data["summary"]["severity_breakdown"][severity] += 1
+            else:
+                self.report_data["summary"]["severity_breakdown"]["HIGH"] += 1
 
     def add_secrets_alerts(self, alerts):
         """Add secrets scanning results"""

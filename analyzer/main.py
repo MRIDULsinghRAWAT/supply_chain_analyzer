@@ -1,10 +1,20 @@
 import argparse
 import os
+import sys
+
+# Ensure stdout supports Unicode (box-drawing chars, etc.) on Windows
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass  # Python < 3.7
+
 from analyzer.parsers.python_parser import PythonParser
 from analyzer.parsers.npm_parser import NpmParser
 from analyzer.scanners.typosquatting import TyposquattingScanner
 from analyzer.scanners.vulnerability import VulnerabilityScanner
 from analyzer.scanners.secrets import SecretsScanner
+from analyzer.graph.dependency_graph import DependencyGraph
 from analyzer.reporters.console import ConsoleReporter
 from analyzer.reporters.json_report import JsonReporter
 
@@ -18,6 +28,8 @@ def main():
     parser.add_argument('--scan-git', action='store_true', help="Scan git history for secrets")
     parser.add_argument('--no-vuln', action='store_true', help="Skip vulnerability scanning")
     parser.add_argument('--no-typo', action='store_true', help="Skip typosquatting scanning")
+    parser.add_argument('--graph', action='store_true', help="Show dependency graph visualization")
+    parser.add_argument('--graph-depth', type=int, default=None, help="Max depth for graph tree (default: unlimited)")
     
     args = parser.parse_args()
 
@@ -31,12 +43,15 @@ def main():
 
     dependencies = []
 
+    ecosystem = None  # Will be set based on file type
+
     # ===== PHASE 1: PARSING =====
     if args.file:
         file_ext = os.path.splitext(args.file)[1].lower()
         
         if file_ext == '.txt':
             # Parse Python requirements.txt
+            ecosystem = 'python'
             reporter.print_header(f"Starting Analysis on {args.file}")
             try:
                 python_parser = PythonParser(args.file)
@@ -48,6 +63,7 @@ def main():
         
         elif file_ext == '.json':
             # Parse npm package.json
+            ecosystem = 'npm'
             reporter.print_header(f"Starting Analysis on {args.file}")
             try:
                 npm_parser = NpmParser(args.file)
@@ -69,18 +85,48 @@ def main():
 
         json_reporter.add_dependencies(dependencies)
 
+    # ===== PHASE 1.5: DEPENDENCY GRAPH =====
+    if args.graph and dependencies:
+        reporter.print_header("Building Dependency Graph")
+        project_name = os.path.basename(args.file) if args.file else "project"
+        graph = DependencyGraph(project_name=project_name)
+        graph.build_from_dependencies(dependencies, ecosystem=ecosystem)
+
+        # Print ASCII tree
+        reporter.print_info("Dependency Tree:")
+        print()
+        print(graph.render_tree(max_depth=args.graph_depth))
+        print()
+
+        # Print stats box
+        print(graph.render_stats_box())
+        print()
+
+        # Add to JSON report
+        json_reporter.add_dependency_graph(graph.to_dict())
+
     # ===== PHASE 2: SCANNING =====
     
     # Typosquatting Scanner
     if not args.no_typo and dependencies:
         typo_scanner = TyposquattingScanner()
         reporter.print_header("Scanning for Typosquatting")
-        typo_alerts = typo_scanner.scan(dependencies, reporter=reporter)
+        typo_alerts = typo_scanner.scan(dependencies, reporter=reporter, ecosystem=ecosystem)
         if not typo_alerts:
             reporter.print_success("No typosquatting detected.")
         else:
             for alert in typo_alerts:
-                reporter.print_warning(f"{alert['package']} - {alert['message']}")
+                severity = alert.get('severity', 'HIGH')
+                technique = alert.get('technique', 'unknown')
+                confidence = alert.get('confidence', 'MEDIUM')
+                if severity == 'CRITICAL':
+                    reporter.print_danger(
+                        f"[{severity}] {alert['package']} - {alert['message']} "
+                        f"(technique: {technique}, confidence: {confidence})")
+                else:
+                    reporter.print_warning(
+                        f"[{severity}] {alert['package']} - {alert['message']} "
+                        f"(technique: {technique}, confidence: {confidence})")
         json_reporter.add_typosquatting_alerts(typo_alerts)
 
     # Vulnerability Scanner

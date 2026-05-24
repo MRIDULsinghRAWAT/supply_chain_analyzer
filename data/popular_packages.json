@@ -1,12 +1,41 @@
-[
-  "requests", "numpy", "pandas", "django", "flask", 
-  "urllib3", "sqlalchemy", "beautifulsoup4", "pytest",
-  "scipy", "matplotlib", "scikit-learn", "tensorflow", "pytorch",
-  "express", "react", "vue", "angular", "node",
-  "lodash", "moment", "axios", "webpack", "jest",
-  "fastapi", "celery", "redis", "postgresql", "mongodb",
-  "pytorch", "keras", "nltk", "pillow", "selenium",
-  "protobuf", "grpc", "boto3", "azure-sdk", "google-cloud",
-  "fastapi", "httpx", "starlette", "pydantic",
-  "docker", "kubernetes", "terraform", "ansible"
-]
+{
+  "python": [
+    "requests", "numpy", "pandas", "django", "flask",
+    "urllib3", "sqlalchemy", "beautifulsoup4", "pytest",
+    "scipy", "matplotlib", "scikit-learn", "tensorflow", "pytorch",
+    "fastapi", "celery", "redis", "pillow", "selenium",
+    "protobuf", "boto3", "httpx", "starlette", "pydantic",
+    "keras", "nltk", "cryptography", "paramiko", "setuptools",
+    "pip", "wheel", "six", "certifi", "charset-normalizer",
+    "idna", "pyyaml", "jinja2", "markupsafe", "click",
+    "werkzeug", "itsdangerous", "pygments", "sphinx", "tox",
+    "black", "flake8", "mypy", "isort", "bandit",
+    "gunicorn", "uvicorn", "aiohttp", "tornado", "twisted",
+    "scrapy", "lxml", "openpyxl", "xlrd", "psycopg2",
+    "pymongo", "sqlalchemy", "alembic", "marshmallow", "attrs",
+    "dataclasses", "typing-extensions", "importlib-metadata",
+    "colorama", "tqdm", "rich", "arrow", "pendulum",
+    "python-dateutil", "pytz"
+  ],
+  "npm": [
+    "express", "react", "vue", "angular", "lodash",
+    "moment", "axios", "webpack", "jest", "mocha",
+    "next", "nuxt", "svelte", "jquery", "underscore",
+    "typescript", "eslint", "prettier", "babel", "rollup",
+    "vite", "esbuild", "parcel", "gulp", "grunt",
+    "socket.io", "mongoose", "sequelize", "knex", "prisma",
+    "graphql", "apollo", "passport", "jsonwebtoken", "bcrypt",
+    "cors", "helmet", "morgan", "dotenv", "chalk",
+    "commander", "yargs", "inquirer", "ora", "debug",
+    "uuid", "dayjs", "date-fns", "rxjs", "ramda",
+    "cheerio", "puppeteer", "playwright", "cypress", "nightwatch",
+    "nodemon", "pm2", "forever", "concurrently", "cross-env",
+    "body-parser", "cookie-parser", "multer", "formidable", "sharp",
+    "redis", "ioredis", "bull", "koa", "fastify",
+    "hapi", "restify", "nest", "electron", "react-native"
+  ],
+  "shared": [
+    "docker", "kubernetes", "terraform", "ansible",
+    "grpc", "azure-sdk", "google-cloud", "mongodb", "postgresql"
+  ]
+}
