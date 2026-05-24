@@ -19,6 +19,13 @@
 - **Typosquatting Scanner**: Utilizes Levenshtein distance metrics to detect lookalike package names against a database of 40+ popular packages.
 - **Secrets Scanner**: Detects 10+ patterns including AWS keys, GitHub tokens, Private keys (RSA/PGP), Database strings, Slack webhooks, JWT tokens, and Passwords. It can scan single files, entire directories recursively, and even Git history (up to the last 50 commits).
 
+* **Dependency Graph & Visualization**
+- **Directed Graph Representation**: Models package relationships as a directed graph.
+- **Cycle Detection**: Uses DFS with 3-color marking to detect circular dependency loops.
+- **Depth Calculation**: Employs a BFS-based shortest-path traversal to compute exact dependency depth.
+- **ASCII Visualizations**: Renders clean, nested tree diagrams and bordered stats boxes directly in the console.
+- **JSON Serialization**: Exports full graph adjacency lists and statistics into the final JSON report.
+
 * **Comprehensive Reporting System**
 - **Console Output**: Color-coded, human-readable terminal reports.
 - **JSON Export**: Structured JSON report generation containing metadata, execution timestamps, severity breakdowns, and detailed vulnerability tracking.
@@ -27,11 +34,12 @@
 
 ## 3. Project Architecture
 
-The application is structured into four main components:
+The application is structured into five main components:
 - **Parsers (`analyzer/parsers/`)**: Handles reading and tokenizing dependency formats (e.g., `PythonParser`, `NpmParser`).
+- **Dependency Graph (`analyzer/graph/`)**: Builds package relationship graphs, computes depths/cycles, and generates ASCII tree and stats box representations (`DependencyGraph`).
 - **Scanners (`analyzer/scanners/`)**: Modular scanning engines that perform the actual threat detection (`TyposquattingScanner`, `VulnerabilityScanner`, `SecretsScanner`).
 - **Reporters (`analyzer/reporters/`)**: Output formatters for structuring the results (`ConsoleReporter`, `JsonReporter`).
-- **Data & Testing**: Local databases (`popular_packages.json`), example targets, and pytest-based test suites.
+- **Data & Testing**: Local databases (`popular_packages.json`, `known_deps.json`), example targets, and pytest-based test suites.
 
 ## 4. Installation & Quick Start
 
@@ -51,8 +59,11 @@ pip install -e .
 # Scan a Python project
 scan-deps -f requirements.txt
 
-# Scan an npm project with secret scanning enabled
-scan-deps -f package.json --scan-secrets
+# Scan a Python project and view its dependency tree
+scan-deps -f requirements.txt --graph
+
+# Scan an npm project with secret scanning enabled and depth-limited graph (depth = 1)
+scan-deps -f package.json --scan-secrets --graph --graph-depth 1
 
 # Full directory scan + Git history scan with JSON output
 scan-deps -d . --scan-secrets --scan-git -o complete_report.json
@@ -69,6 +80,8 @@ scan-deps -d . --scan-secrets --scan-git -o complete_report.json
 | `--scan-git` | Scan git history for secrets (requires git) |
 | `--no-vuln` | Skip vulnerability scanning |
 | `--no-typo` | Skip typosquatting scanning |
+| `--graph` | Show dependency graph visualization tree and stats box |
+| `--graph-depth` | Max depth for graph tree output (default: unlimited) |
 
 ## 6. How Scanning Works (Deep Dive)
 
@@ -84,6 +97,13 @@ scan-deps -d . --scan-secrets --scan-git -o complete_report.json
 
 ### 6.2 Secret Detection Lifecycle
 Utilizing robust regular expressions, the `SecretsScanner` traverses designated files or Git objects, looking for known credential entropy and patterns. It automatically filters binary files and standard media extensions to ensure optimal performance. Git scanning involves looking through recent commit diffs.
+
+### 6.3 Dependency Graph Engine
+1. **Graph Construction**: Uses direct dependencies extracted by the parsers. For Python `requirements.txt` (which lacks transitive information), it uses a local database (`data/known_deps.json`) of popular packages and their known direct dependencies to expand the tree. For npm `package.json`, it traverses `node_modules/` recursively to resolve actual installed transitive relationships.
+2. **Depth Calculation**: Employs a BFS-based shortest-path algorithm starting from the root elements to compute the exact depth of every package in the tree.
+3. **Cycle Detection**: Applies a DFS-based algorithm using three-color marking to detect and list circular dependency loops, preventing infinite cycles and warning about architectural issues.
+4. **ASCII Visualization**: Generates a recursive tree format with Unicode box-drawing characters. Supports `--graph-depth` parameters, automatically collapsing deeper subtrees into descriptive summaries (e.g., `... (15 transitive deps)`) to keep output readable on large projects.
+5. **Bordered Stats Box**: Displays an aligned statistics overview containing node counts, max depth, most depended-on packages, and cycle status.
 
 ## 7. CI/CD Integration
 
