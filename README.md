@@ -71,6 +71,8 @@ scan-deps --help
 
 ## Usage
 
+### Basic Examples
+
 ```bash
 # Full Python scan — secrets, git history, dependency graph, and dashboard
 scan-deps -f data/example_requirements.txt --scan-secrets -d . --scan-git --graph --dashboard
@@ -84,6 +86,28 @@ scan-deps -d . --scan-secrets --scan-git
 # Quick scan — skip vulnerability and typosquatting checks
 scan-deps -f requirements.txt --no-vuln --no-typo --dashboard
 ```
+
+### Running on Real Projects
+
+Replace the paths in these commands with the absolute or relative path to your real project files.
+
+```bash
+# Python Project (requirements.txt)
+scan-deps -f /path/to/your/project/requirements.txt --scan-secrets -d /path/to/your/project --scan-git --graph --dashboard
+
+# Node.js Project (package.json)
+scan-deps -f /path/to/your/project/package.json --scan-secrets -d /path/to/your/project --scan-git --graph --dashboard
+
+# Ruby Project (Gemfile)
+scan-deps -f /path/to/your/project/Gemfile --scan-secrets -d /path/to/your/project --scan-git --graph --dashboard
+
+# Java/Maven Project (pom.xml)
+scan-deps -f /path/to/your/project/pom.xml --scan-secrets -d /path/to/your/project --scan-git --graph --dashboard
+
+# Directory Secret Scan Only (No manifest file needed)
+scan-deps -d /path/to/your/project --scan-secrets --scan-git
+```
+
 
 ---
 
