@@ -3,10 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Output reports and caches
-*.json
-!data/*.json
+# Cache files generated at runtime
 vulnerability_cache.json
+dep_confusion_cache.json
+license_cache.json
+version_cache.json
+
+# Output reports
 supply_chain_report.json
 the_ultimate_report.json
 

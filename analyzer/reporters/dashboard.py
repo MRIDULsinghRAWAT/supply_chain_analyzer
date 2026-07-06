@@ -27,7 +27,7 @@ class DashboardReporter:
             status_bg = "\033[41m\033[37m" # Red bg, White text
 
         print(f"\n{Style.BRIGHT}{Fore.CYAN}┌──────────────────────────────────────────────────────────────────────────────┐")
-        print(f"{Style.BRIGHT}{Fore.CYAN}│               🛡️   SUPPLY CHAIN SECURITY ANALYZER DASHBOARD                  │")
+        print(f"{Style.BRIGHT}{Fore.CYAN}|               SUPPLY CHAIN SECURITY ANALYZER DASHBOARD                      |")
         print(f"{Style.BRIGHT}{Fore.CYAN}└──────────────────────────────────────────────────────────────────────────────┘")
         
         # Meta info
@@ -86,6 +86,6 @@ class DashboardReporter:
             for idx, rec in enumerate(recs, 1):
                 print(f"  {Fore.MAGENTA}{idx}. {Style.RESET_ALL}{rec.get('text')}")
         else:
-            print(f" {Fore.GREEN}✓ No immediate remediation actions needed. Keep up the good work!")
+            print(f" {Fore.GREEN}[OK] No immediate remediation actions needed. Keep up the good work!")
         print("-" * 80)
         print()
