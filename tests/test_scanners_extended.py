@@ -9,7 +9,6 @@ from analyzer.scanners.license import LicenseScanner
 from analyzer.scanners.dep_confusion import DependencyConfusionScanner
 from analyzer.scanners.pipeline import PipelineScanner
 from analyzer.scanners.version_analyzer import VersionAnalyzer
-from analyzer.scanners.artifact import ArtifactScanner
 from analyzer.graph.dependency_graph import DependencyGraph
 
 class TestExtendedParsers(unittest.TestCase):
@@ -210,37 +209,6 @@ class TestExtendedScanners(unittest.TestCase):
         # Can be mock database value "5.0.6" or actual PyPI value e.g. "6.0.6"
         latest_ver = alerts[0]["latest_version"]
         self.assertTrue(latest_ver[0].isdigit(), f"Expected a valid version string, got: {latest_ver}")
-
-    def test_artifact_scanner(self):
-        scanner = ArtifactScanner()
-
-        # Test Dockerfile scanning
-        dockerfile_content = """
-        FROM python:latest
-        ENV DB_PASSWORD=my_secret_db_pass_123
-        RUN apt-get update && apt-get install -y git
-        RUN pip install requests
-        """
-        with tempfile.NamedTemporaryFile(suffix="Dockerfile", delete=False, mode="w", encoding="utf-8") as f:
-            f.write(dockerfile_content)
-            dockerfile_path = f.name
-
-        try:
-            alerts = scanner.scan_file(dockerfile_path)
-            self.assertTrue(len(alerts) > 0)
-            
-            # Should complain about:
-            # - UNPINNED_BASE_IMAGE (using :latest)
-            # - HARDCODED_ENV_SECRET
-            # - UNSAFE_APT_GET (no rm -rf)
-            # - UNSAFE_PIP_INSTALL (unpinned pip install)
-            # - USER instruction missing
-            messages = [a["message"] for a in alerts]
-            self.assertTrue(any("Base image is unpinned" in m for m in messages))
-            self.assertTrue(any("Hardcoded secret detected" in m for m in messages))
-            self.assertTrue(any("USER instruction" in m for m in messages))
-        finally:
-            os.remove(dockerfile_path)
 
 
 class TestDependencyGraphBlastRadius(unittest.TestCase):

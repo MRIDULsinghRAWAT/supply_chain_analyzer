@@ -162,13 +162,6 @@ Each scanner takes a list of dependencies (and sometimes a directory path) and r
 - Uses `packaging.version.parse()` for proper semantic version comparison.
 - Caches results in `version_cache.json`
 
-#### `artifact.py` — Dockerfile Scanner
-- Walks the directory for files named `Dockerfile`, `Dockerfile.*`, or `*.dockerfile`
-- Parses each line and checks for:
-  - **Unpinned base images:** `FROM node:latest` or `FROM python` with no tag/digest
-  - **Missing USER directive:** If no `USER` instruction exists, the container runs as root
-  - **Hardcoded secrets:** `ENV` lines containing words like `SECRET`, `PASSWORD`, `API_KEY`, `TOKEN`
-  - **Unsafe installations:** `pip install` or `apt-get install` without `--no-cache-dir` or cleanup
 
 ---
 
@@ -252,9 +245,9 @@ Tests all 4 parsers — creates temporary files with sample content, parses them
 Tests core scanners (vulnerability, typosquatting, secrets) with mocked inputs and expected outputs.
 
 #### `test_scanners_extended.py`
-Tests the newer scanners (license, dependency confusion, pipeline, artifact, version analyzer) and the dependency graph builder.
+Tests the newer scanners (license, dependency confusion, pipeline, version analyzer) and the dependency graph builder.
 
-Total: 30 test cases.
+Total: 29 test cases.
 
 ---
 

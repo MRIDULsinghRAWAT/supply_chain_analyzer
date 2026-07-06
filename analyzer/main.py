@@ -20,7 +20,6 @@ from analyzer.scanners.license import LicenseScanner
 from analyzer.scanners.dep_confusion import DependencyConfusionScanner
 from analyzer.scanners.pipeline import PipelineScanner
 from analyzer.scanners.version_analyzer import VersionAnalyzer
-from analyzer.scanners.artifact import ArtifactScanner
 from analyzer.graph.dependency_graph import DependencyGraph
 from analyzer.reporters.console import ConsoleReporter
 from analyzer.reporters.json_report import JsonReporter
@@ -312,20 +311,7 @@ def main():
                 reporter.print_warning(f"[{alert['severity']}] {alert['package']} (installed: {alert['installed_version']}, latest: {alert['latest_version']}): {alert['message']}")
         json_reporter.add_version_alerts(version_alerts)
 
-    # Container / Dockerfile Artifact Scanner
-    if args.directory or args.file:
-        artifact_scanner = ArtifactScanner()
-        reporter.print_header("Scanning Dockerfiles & Build Artifacts")
-        scan_dir = args.directory or (os.path.dirname(args.file) if args.file else '.')
-        
-        artifact_alerts = artifact_scanner.scan_directory(scan_dir)
-        if not artifact_alerts:
-            reporter.print_success("No container image or Dockerfile risks detected.")
-        else:
-            for alert in artifact_alerts:
-                line_info = f" (Line {alert['line']})" if 'line' in alert else ""
-                reporter.print_danger(f"[{alert['severity']}] {alert['file']}{line_info}: {alert['message']}")
-        json_reporter.add_artifact_alerts(artifact_alerts)
+
 
     # ===== PHASE 3: REPORTING =====
     reporter.print_header("Generating Report")
@@ -346,8 +332,7 @@ def main():
         json_reporter.add_recommendation("Pin third-party Actions to full commit SHAs and remove dangerous command lines from CI/CD")
     if summary["versions_outdated"] > 0:
         json_reporter.add_recommendation(f"Upgrade {summary['versions_outdated']} outdated packages to their latest versions")
-    if summary["artifact_issues"] > 0:
-        json_reporter.add_recommendation("Pin base images in Dockerfiles, implement USER directive, and clear package manager caches")
+
     
     # Save JSON report
     report_path = json_reporter.save_json()

@@ -22,7 +22,7 @@ A command-line tool that audits software dependencies, source code, and build pi
 
 ## What It Does
 
-This tool reads your dependency manifest file, builds a dependency graph, and runs 8 security scanners against your project:
+This tool reads your dependency manifest file, builds a dependency graph, and runs 7 security scanners against your project:
 
 1. **Vulnerability Scanner (SCA)** — checks dependencies against CVE databases (GitHub Advisory + NVD)
 2. **Secrets Scanner** — detects hardcoded API keys, tokens, and passwords in files and git history
@@ -30,8 +30,7 @@ This tool reads your dependency manifest file, builds a dependency graph, and ru
 4. **License Compliance Tracker** — classifies license risk and detects copyleft conflicts
 5. **Dependency Confusion Scanner** — audits registry configs for substitution attack risks
 6. **CI/CD Pipeline Auditor** — flags dangerous patterns in GitHub Actions, GitLab CI, Jenkinsfiles
-7. **Dockerfile Scanner** — catches unpinned images, root execution, and baked-in secrets
-8. **Version Staleness Analyzer** — compares installed versions against latest upstream releases
+7. **Version Staleness Analyzer** — compares installed versions against latest upstream releases
 
 It then generates a JSON report with a health score and recommended actions.
 
@@ -119,7 +118,7 @@ scan-deps [-h] [-f FILE] [-d DIRECTORY] [-o OUTPUT]
           [--graph] [--graph-depth DEPTH] [--dashboard]
 
   -f, --file FILE           Dependency manifest file (requirements.txt, package.json, Gemfile, pom.xml)
-  -d, --directory DIR       Directory to scan for secrets, pipelines, and Dockerfiles
+  -d, --directory DIR       Directory to scan for secrets and pipelines
   -o, --output FILE         Output JSON report path (default: supply_chain_report.json)
   --scan-secrets            Enable secret detection in source files
   --scan-git                Scan git commit history for leaked secrets
@@ -172,11 +171,6 @@ Uses 7 algorithms ranked by priority:
 - Scans `.github/workflows/*.yml`, `.gitlab-ci.yml`, and `Jenkinsfile`
 - Detects shell piping (`curl | bash`), unpinned action tags, env secret exposure, and exfiltration patterns
 
-### Dockerfile Scanner
-- Flags unpinned base images (`FROM node:latest`)
-- Detects missing `USER` directives (running as root)
-- Catches hardcoded secrets in `ENV` instructions
-
 ### Version Staleness Analyzer
 - Compares local versions against latest releases on PyPI, npm, RubyGems
 - Caches results in `version_cache.json`
@@ -224,8 +218,7 @@ supply-chain-analyzer/
 │   │   ├── license.py             # License risk classification
 │   │   ├── dep_confusion.py       # Dependency confusion detection
 │   │   ├── pipeline.py            # CI/CD pipeline audit
-│   │   ├── version_analyzer.py    # Version staleness checker
-│   │   └── artifact.py            # Dockerfile audit
+│   │   └── version_analyzer.py    # Version staleness checker
 │   ├── graph/
 │   │   └── dependency_graph.py    # BFS/DFS graph + blast radius tracing
 │   └── reporters/

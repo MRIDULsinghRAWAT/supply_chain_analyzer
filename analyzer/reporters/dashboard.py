@@ -61,12 +61,10 @@ class DashboardReporter:
         dc_color = Fore.RED if summary.get("dep_confusion_issues", 0) > 0 else Fore.GREEN
         pip_color = Fore.YELLOW if summary.get("pipeline_issues", 0) > 0 else Fore.GREEN
         ver_color = Fore.WHITE if summary.get("versions_outdated", 0) > 0 else Fore.GREEN
-        art_color = Fore.YELLOW if summary.get("artifact_issues", 0) > 0 else Fore.GREEN
-
         print_row("Vulnerabilities (SCA)", summary.get("vulnerabilities_found", 0), "Typosquatting Alerts", summary.get("typosquatting_alerts", 0), vuln_color, typo_color)
         print_row("Exposed Secrets", summary.get("secrets_found", 0), "License Risks & Conflicts", summary.get("licenses_found", 0), sec_color, lic_color)
         print_row("Dependency Confusion", summary.get("dep_confusion_issues", 0), "CI/CD Pipeline Risks", summary.get("pipeline_issues", 0), dc_color, pip_color)
-        print_row("Outdated Dependencies", summary.get("versions_outdated", 0), "Container / Artifact Risks", summary.get("artifact_issues", 0), ver_color, art_color)
+        print_row("Outdated Dependencies", summary.get("versions_outdated", 0), "Scan Status", "COMPLETE", ver_color, Fore.GREEN)
         
         print(" └──────────────────────────────────────┴──────────────────────────────────────┘")
         
