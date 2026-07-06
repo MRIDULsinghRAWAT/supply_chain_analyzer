@@ -38,10 +38,6 @@
 - [Dependency Graph & Blast Radius](#-dependency-graph--blast-radius)
 - [Terminal Dashboard](#-terminal-dashboard)
 - [Output & Reporting](#-output--reporting)
-- [CI/CD Integrations](#-cicd-integrations)
-  - [Pre-Commit Hook](#pre-commit-hook)
-  - [GitHub Actions](#github-actions)
-  - [GitLab CI](#gitlab-ci)
 - [Project Structure](#-project-structure)
 - [Testing](#-testing)
 - [Contributing](#-contributing)
@@ -416,81 +412,6 @@ Every scan produces a comprehensive JSON report (default: `supply_chain_report.j
 
 ---
 
-## 🔗 CI/CD Integrations
-
-### Pre-Commit Hook
-
-Add to your `.pre-commit-config.yaml`:
-
-```yaml
-repos:
-  - repo: local
-    hooks:
-      - id: supply-chain-scan
-        name: Supply Chain Security Analyzer
-        entry: scan-deps -f requirements.txt --scan-secrets -d .
-        language: system
-        files: ^(requirements\.txt|package\.json|Gemfile|pom\.xml)$
-        pass_filenames: false
-```
-
-### GitHub Actions
-
-Create `.github/workflows/scan.yml`:
-
-```yaml
-name: Supply Chain Security Scan
-on: [push, pull_request]
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@692973e3d93d1497a1f264998ee64a54a59d7251 # v4.1.7
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@f67e240f2867c4270ca87d100796396870d1e58e # v5.2.0
-        with:
-          python-version: '3.12'
-
-      - name: Install & Scan
-        run: |
-          pip install -r requirements.txt
-          pip install -e .
-          scan-deps -f requirements.txt --scan-secrets --scan-git -d . -o supply_chain_report.json
-
-      - name: Upload Report
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
-        with:
-          name: security-report
-          path: supply_chain_report.json
-```
-
-> 🔒 All actions are pinned to immutable commit SHAs to prevent tag-mutation attacks.
-
-### GitLab CI
-
-Add to your `.gitlab-ci.yml`:
-
-```yaml
-supply-chain-scan:
-  stage: test
-  image: python:3.12-slim
-  script:
-    - pip install -r requirements.txt
-    - pip install -e .
-    - scan-deps -f requirements.txt --scan-secrets -d . -o supply_chain_report.json
-  artifacts:
-    paths:
-      - supply_chain_report.json
-    expire_in: 30 days
-```
-
----
-
 ## 📂 Project Structure
 
 ```
@@ -532,11 +453,7 @@ supply-chain-analyzer/
 │   ├── test_parsers.py            # Parser unit tests
 │   ├── test_scanners.py           # Core scanner tests
 │   └── test_scanners_extended.py  # Extended scanner coverage tests
-├── .github/
-│   └── workflows/
-│       └── scan.yml               # GitHub Actions CI workflow
-├── .gitlab-ci.yml                 # GitLab CI configuration
-├── .pre-commit-config.yaml        # Pre-commit hook configuration
+
 ├── .gitignore
 ├── requirements.txt               # Python dependencies
 ├── setup.py                       # Package setup with CLI entry point
