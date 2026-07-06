@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: scan-deps
+        name: Supply Chain Dependency Analyzer
+        entry: scan-deps -f requirements.txt --scan-secrets -d .
+        language: system
+        files: ^(requirements\.txt|package\.json|Gemfile|pom\.xml)$
+        pass_filenames: false

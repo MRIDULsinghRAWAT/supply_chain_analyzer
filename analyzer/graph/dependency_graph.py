@@ -419,3 +419,24 @@ class DependencyGraph:
                 self._known_deps = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             self._known_deps = {}
+
+    def find_path_to(self, target):
+        """Find the shortest dependency path from a direct dependency to target package."""
+        target = target.lower()
+        roots = self.get_direct_deps()
+        if target in roots:
+            return [target]
+
+        queue = deque([[root] for root in roots])
+        visited = set(roots)
+        while queue:
+            path = queue.popleft()
+            current = path[-1]
+            if current == target:
+                return path
+
+            for child in self.adjacency.get(current, set()):
+                if child not in visited:
+                    visited.add(child)
+                    queue.append(path + [child])
+        return []

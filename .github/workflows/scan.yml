@@ -1,0 +1,40 @@
+name: Supply Chain Security Scan
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@692973e3d93d1497a1f264998ee64a54a59d7251 # v4.1.7
+      with:
+        fetch-depth: 0 # Required to scan full git history for secrets
+
+    - name: Set up Python
+      uses: actions/setup-python@f67e240f2867c4270ca87d100796396870d1e58e # v5.2.0
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e .
+
+    - name: Run Dependency Security Analysis
+      run: |
+        # Run scan on requirements.txt and check secrets / pipelines / artifacts in project
+        scan-deps -f requirements.txt --scan-secrets --scan-git -d . -o supply_chain_report.json
+
+    - name: Upload Security Report
+      uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+      if: always()
+      with:
+        name: supply-chain-security-report
+        path: supply_chain_report.json

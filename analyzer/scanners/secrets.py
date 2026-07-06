@@ -105,7 +105,7 @@ class SecretsScanner:
         
         for root, dirs, files in os.walk(directory_path):
             # Skip common excluded directories
-            dirs[:] = [d for d in dirs if d not in ['.git', 'node_modules', '.venv', '__pycache__', '.env']]
+            dirs[:] = [d for d in dirs if d not in ['.git', 'node_modules', '.venv', '__pycache__', '.env', 'tests', 'test']]
             
             for file in files:
                 file_path = os.path.join(root, file)

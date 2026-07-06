@@ -1,136 +1,206 @@
-# Supply Chain Analyzer
+# Supply Chain Security Analyzer
 
 ## 1. Project Overview
-**Supply Chain Analyzer** is a comprehensive Python-based security analysis tool for detecting supply chain vulnerabilities in project dependencies. It performs advanced security scanning on project dependencies (such as Python's `requirements.txt` and Node's `package.json`) to identify:
-- **Typosquatting attacks**: Detecting packages with names similar to popular packages.
-- **Known vulnerabilities (SCA)**: Identifying packages with known security vulnerabilities using real-time CVE correlation (GitHub Advisory API & NVD).
-- **Secret exposure**: Scanning code and git history for accidentally committed secrets (API keys, tokens, etc.).
-- **Dependency analysis**: Parsing and analyzing project dependency files, including transitive dependencies.
+**Supply Chain Security Analyzer** is an advanced command-line tool written in Python 3 designed to inspect third-party dependencies, config files, and build pipelines to identify security vulnerabilities before they hit production. 
 
-## 2. Key Features and Capabilities
+It implements a clean **Parse → Scan → Report** pipeline architecture, checking dependency manifests, configuration files, and build configurations.
 
-* **Multi-Package Manager Support**
-- **Python**: Analyze `requirements.txt` and `setup.py`.
-- **npm**: Analyze `package.json` with support for `devDependencies`, `peerDependencies`, and `optionalDependencies`.
-- **Transitive Dependencies**: Deep scanning into `node_modules/` to catch indirect vulnerabilities.
+### Key Capabilities
+* 🛡️ **Software Composition Analysis (SCA)**: Real-time CVE scanning and PEP 440-compliant version matching against GitHub Advisories and the National Vulnerability Database.
+* 🕵️‍♂️ **Secrets Exposure Detection**: Scans source files and Git commit history (diffs) for hardcoded credentials (AWS, Stripe, Slack, GitHub, Database URIs, passwords, etc.).
+* ⚠️ **Typosquatting Detection**: Uses 7 custom, prioritized algorithms (Levenshtein, homoglyphs, char-swaps, repeated chars, combosquatting, separator confusion, and version suffixes) to identify mimicry of popular packages.
+* 📋 **License Compliance & Conflict Tracker**: Classifies licenses (GPL, EPL, Apache-2.0, MIT, etc.) by risk and alerts on copyleft-proprietary license incompatibilities.
+* 📦 **Dependency Confusion Detection**: Scans `.npmrc` and `pip.conf` index configs, checks public registries for namespaces, and detects unclaimed/vulnerable private packages.
+* 🛠️ **CI/CD Pipeline Security Scanner**: Audits GitHub Actions, GitLab CI, and Jenkins configurations for shell command execution vulnerabilities (e.g. `curl | bash`), unpinned tags, and env-based exfiltration.
+* 🐋 **Container & Artifact Analyzer**: Audits Dockerfiles for unpinned base image versions, root execution risks, and unsafe installation command patterns.
+* 🌳 **Transitive Path Blast Radius Tracing**: Generates resolved dependency trees, detects cycles, and automatically traces shortest-paths from direct parent dependencies to transitive issues.
+* 📊 **Interactive TUI Dashboard**: Visualizes health scores, metrics, categorised findings, and prioritized action plans inside a terminal dashboard.
 
-* **Advanced Security Scanning**
-- **Vulnerability Scanner**: Real-time checking against the GitHub Advisory API and National Vulnerability Database (NVD). Includes PEP 440 compliant version constraint checking and intelligent caching to minimize API calls.
-- **Typosquatting Scanner**: Utilizes Levenshtein distance metrics to detect lookalike package names against a database of 40+ popular packages.
-- **Secrets Scanner**: Detects 10+ patterns including AWS keys, GitHub tokens, Private keys (RSA/PGP), Database strings, Slack webhooks, JWT tokens, and Passwords. It can scan single files, entire directories recursively, and even Git history (up to the last 50 commits).
+---
 
-* **Dependency Graph & Visualization**
-- **Directed Graph Representation**: Models package relationships as a directed graph.
-- **Cycle Detection**: Uses DFS with 3-color marking to detect circular dependency loops.
-- **Depth Calculation**: Employs a BFS-based shortest-path traversal to compute exact dependency depth.
-- **ASCII Visualizations**: Renders clean, nested tree diagrams and bordered stats boxes directly in the console.
-- **JSON Serialization**: Exports full graph adjacency lists and statistics into the final JSON report.
+## 2. Supported Ecosystems & Parsers
 
-* **Comprehensive Reporting System**
-- **Console Output**: Color-coded, human-readable terminal reports.
-- **JSON Export**: Structured JSON report generation containing metadata, execution timestamps, severity breakdowns, and detailed vulnerability tracking.
-- **Security Scoring System**: Generates a 0-100 metric for project health.
-- **Remediation**: Recommends actionable fixes for discovered vulnerabilities.
+| Parser | Target File | Ecosystem | Notes |
+|---|---|---|---|
+| `PythonParser` | `requirements.txt` | Python / PyPI | Supports comment filtering and standard version constraints. |
+| `NpmParser` | `package.json` | Node.js / npm | Parses all four dependency types; scans local `node_modules/` for transitive structures. |
+| `RubyParser` | `Gemfile` | Ruby / RubyGems | Extracts gem declarations and version constraint patterns. |
+| `MavenParser` | `pom.xml` | Java / Maven | Parses XML structures, resolves properties dynamically, handles Maven scopes, and constructs `groupId:artifactId` names. |
 
-## 3. Project Architecture
+---
 
-The application is structured into five main components:
-- **Parsers (`analyzer/parsers/`)**: Handles reading and tokenizing dependency formats (e.g., `PythonParser`, `NpmParser`).
-- **Dependency Graph (`analyzer/graph/`)**: Builds package relationship graphs, computes depths/cycles, and generates ASCII tree and stats box representations (`DependencyGraph`).
-- **Scanners (`analyzer/scanners/`)**: Modular scanning engines that perform the actual threat detection (`TyposquattingScanner`, `VulnerabilityScanner`, `SecretsScanner`).
-- **Reporters (`analyzer/reporters/`)**: Output formatters for structuring the results (`ConsoleReporter`, `JsonReporter`).
-- **Data & Testing**: Local databases (`popular_packages.json`, `known_deps.json`), example targets, and pytest-based test suites.
+## 3. High-Level Architecture
 
-## 4. Installation & Quick Start
+```
+                               ┌──────────────────────────┐
+                               │       CLI Entry          │
+                               │    (analyzer/main.py)    │
+                               └────────────┬─────────────┘
+                                            │
+               ┌────────────────────────────┼───────────────────────────┐
+               ▼                            ▼                           ▼
+        [1. PARSING]                 [1.5 DEPS GRAPH]             [2. SCANNING ENGINES]
+ ┌──────────────────────────┐  ┌──────────────────────────┐  ┌──────────────────────────┐
+ │ • python_parser.py       │  │ • dependency_graph.py    │  │ • vulnerability.py (SCA) │
+ │ • npm_parser.py          │  │                          │  │ • typosquatting.py       │
+ │ • ruby_parser.py         │  │ - BFS Depth Assignment   │  │ • secrets.py             │
+ │ • maven_parser.py        │  │ - DFS Cycle Detection    │  │ • license.py             │
+ └──────────────────────────┘  │ - Shortest-Path Tracing  │  │ • dep_confusion.py       │
+                               │ - ASCII Tree Drawing     │  │ • pipeline.py            │
+                               └──────────────────────────┘  │ • version_analyzer.py    │
+                                                             │ • artifact.py (Docker)   │
+                                                             └──────────┬───────────────┘
+                                                                        │
+                                                                        ▼
+                                                                  [3. REPORTING]
+                                                             ┌──────────────────────────┐
+                                                             │ • json_report.py         │
+                                                             │ • console.py             │
+                                                             │ • dashboard.py (TUI)     │
+                                                             └──────────────────────────┘
+```
+
+---
+
+## 4. Installation & Setup
+
+### Prerequisites
+* Python 3.8 or higher.
+* Git installed (required for commit history scanning).
 
 ### Installation
-Ensure you are in the project root directory.
+Clone the repository and run the setup from the root directory:
 ```bash
-# Install required dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# Install the package locally in editable mode
+# Install the package locally in editable mode (adds scan-deps command)
 pip install -e .
 ```
-> *Note: Installing via `pip install -e .` sets up the `scan-deps` CLI entry point.*
 
-### Basic Quick Start
+---
+
+## 5. Quick Start & CLI Reference
+
+Run a full security scan on dependencies and search the current directory for secrets, pipelines, and Dockerfiles:
 ```bash
-# Scan a Python project
-scan-deps -f requirements.txt
+# Scan a Python project, visualize the dependency tree, and render the visual TUI dashboard
+scan-deps -f data/example_requirements.txt --scan-secrets -d . --scan-git --graph --dashboard
 
-# Scan a Python project and view its dependency tree
-scan-deps -f requirements.txt --graph
-
-# Scan an npm project with secret scanning enabled and depth-limited graph (depth = 1)
-scan-deps -f package.json --scan-secrets --graph --graph-depth 1
-
-# Full directory scan + Git history scan with JSON output
-scan-deps -d . --scan-secrets --scan-git -o complete_report.json
+# Scan an npm project and save a JSON report
+scan-deps -f data/example_package.json --scan-secrets -d . -o report.json --dashboard
 ```
 
-## 5. Usage & CLI Reference
+### CLI Command Options
+```
+usage: scan-deps [-h] [-f FILE] [-d DIRECTORY] [-o OUTPUT] [--scan-secrets] [--scan-git] [--no-vuln] [--no-typo] [--graph] [--graph-depth GRAPH_DEPTH] [--dashboard]
 
-| Command | Description |
-|---------|-------------|
-| `-f, --file` | Path to dependency file (`requirements.txt` or `package.json`) |
-| `-d, --directory` | Scan entire directory for secrets |
-| `-o, --output` | Output JSON report file path (default: `supply_chain_report.json`) |
-| `--scan-secrets`| Enable secret scanning (looks for hardcoded credentials) |
-| `--scan-git` | Scan git history for secrets (requires git) |
-| `--no-vuln` | Skip vulnerability scanning |
-| `--no-typo` | Skip typosquatting scanning |
-| `--graph` | Show dependency graph visualization tree and stats box |
-| `--graph-depth` | Max depth for graph tree output (default: unlimited) |
+options:
+  -h, --help            show this help message and exit
+  -f FILE, --file FILE  Path to requirements.txt, package.json, Gemfile, or pom.xml
+  -d DIRECTORY, --directory DIRECTORY
+                        Scan entire directory for secrets, pipelines, and artifacts
+  -o OUTPUT, --output OUTPUT
+                        Output JSON report file path (default: supply_chain_report.json)
+  --scan-secrets        Enable secret scanning
+  --scan-git            Scan git history for secrets
+  --no-vuln             Skip vulnerability scanning
+  --no-typo             Skip typosquatting scanning
+  --graph               Show dependency graph tree and stats box
+  --graph-depth GRAPH_DEPTH
+                        Max depth for graph tree (default: unlimited)
+  --dashboard           Show terminal security dashboard
+```
 
-## 6. How Scanning Works (Deep Dive)
+---
 
-### 6.1 Vulnerability Detection Lifecycle
-1. **Parsing**: The provided dependency file is tokenized. Version numbers are extracted and normalized.
-2. **Cache Check**: The tool queries a local `vulnerability_cache.json` to prevent duplicate API calls for previously scanned versions.
-3. **API Query**: If the version isn't cached, it queries the **GitHub Advisory API** (and falls back to **NVD**).
-4. **Severity Mapping**: Vulnerabilities are tagged with industry-standard severities:
-   - * **CRITICAL** (15 pts deduction): Active exploits, leaked keys.
-   - * **HIGH** (8 pts deduction): Exploitable CVEs, typosquatting, DB credentials.
-   - * **MEDIUM** (3 pts deduction): Moderate impact, weak tokens.
-   - * **LOW** (1 pt deduction): Informational.
+## 6. How the Security Engines Work
 
-### 6.2 Secret Detection Lifecycle
-Utilizing robust regular expressions, the `SecretsScanner` traverses designated files or Git objects, looking for known credential entropy and patterns. It automatically filters binary files and standard media extensions to ensure optimal performance. Git scanning involves looking through recent commit diffs.
+### 6.1 Vulnerability Scanner (SCA)
+* **API Lookups**: Queries the GitHub Advisory GraphQL API and falls back to the National Vulnerability Database (NVD) REST API.
+* **Intelligent Caching**: Saves API responses to `vulnerability_cache.json` to speed up subsequent scans.
+* **Offline Mock Mode**: Automatically falls back to a mock database for popular packages if offline.
+* **PEP 440 Version Matching**: Employs `packaging.specifiers.SpecifierSet` to accurately resolve constraints.
 
-### 6.3 Dependency Graph Engine
-1. **Graph Construction**: Uses direct dependencies extracted by the parsers. For Python `requirements.txt` (which lacks transitive information), it uses a local database (`data/known_deps.json`) of popular packages and their known direct dependencies to expand the tree. For npm `package.json`, it traverses `node_modules/` recursively to resolve actual installed transitive relationships.
-2. **Depth Calculation**: Employs a BFS-based shortest-path algorithm starting from the root elements to compute the exact depth of every package in the tree.
-3. **Cycle Detection**: Applies a DFS-based algorithm using three-color marking to detect and list circular dependency loops, preventing infinite cycles and warning about architectural issues.
-4. **ASCII Visualization**: Generates a recursive tree format with Unicode box-drawing characters. Supports `--graph-depth` parameters, automatically collapsing deeper subtrees into descriptive summaries (e.g., `... (15 transitive deps)`) to keep output readable on large projects.
-5. **Bordered Stats Box**: Displays an aligned statistics overview containing node counts, max depth, most depended-on packages, and cycle status.
+### 6.2 Secrets Scanner
+* Scans files for 10 common secret pattern signatures (private keys, tokens, AWS keys, passwords).
+* Inspects Git commit history (`git show` diffs of the last 50 commits) to catch secrets that were committed and later removed.
+* Automatically ignores test directories (`tests/`, `test/`) to prevent mock testing tokens from triggering false positive alerts.
 
-## 7. CI/CD Integration
+### 6.3 License Scanner
+* Resolves licenses from package registries (PyPI, npm, RubyGems).
+* Maps licenses to three risk tiers: Permissive (LOW), Unlicensed/Proprietary (MEDIUM), Copyleft (HIGH).
+* Detects incompatibility conflicts (e.g. copyleft dependencies mixed with proprietary code).
 
-To continually detect supply chain issues, the tool can be integrated into CI/CD pipelines natively as a GitHub Action.
+### 6.4 Dependency Confusion Scanner
+* Audits registry indexes (`.npmrc` scopes, `pip.conf` `extra-index-url` definitions).
+* Queries public APIs to flag missing/unclaimed public package names mapping to scoped internal dependencies.
 
-**Example: GitHub Actions (`.github/workflows/security-scan.yml`)**
+### 6.5 CI/CD Pipeline Audits
+* Parses GitHub Actions workflows (`.github/workflows/*.yml`), GitLab CI (`.gitlab-ci.yml`), and Jenkinsfiles.
+* Detects execution patterns like shell piping (`curl | bash`), env secrets exposure, and unpinned actions.
+
+### 6.6 Dockerfile Scanner
+* Verifies `Dockerfile` configurations.
+* Triggers alerts on unpinned base images (e.g. `FROM node:latest`), hardcoded `ENV` secrets, missing `USER` directives (running as root), and unsafe package manager structures.
+
+---
+
+## 7. Integrations
+
+### Git Pre-Commit Hook
+Create a `.pre-commit-config.yaml` file in your repository:
+```yaml
+repos:
+  - repo: local
+    hooks:
+      - id: scan-deps
+        name: Supply Chain Dependency Analyzer
+        entry: scan-deps -f requirements.txt --scan-secrets -d .
+        language: system
+        files: ^(requirements\.txt|package\.json|Gemfile|pom\.xml)$
+        pass_filenames: false
+```
+
+### GitHub Actions Workflow (`.github/workflows/scan.yml`)
 ```yaml
 name: Supply Chain Security Scan
 on: [push, pull_request]
 jobs:
-  scan:
+  security-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - name: Install
-        run: pip install -e .
-      - name: Run Security Scan
-        run: scan-deps -f requirements.txt --scan-secrets -o security_report.json
+    - name: Checkout repository
+      uses: actions/checkout@692973e3d93d1497a1f264998ee64a54a59d7251 # v4.1.7
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@f67e240f2867c4270ca87d100796396870d1e58e # v5.2.0
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install -e .
+
+    - name: Run Scan
+      run: scan-deps -f requirements.txt --scan-secrets --scan-git -d . -o supply_chain_report.json
 ```
 
-## 8. Development & Testing
-The tool boasts strong code coverage via the `pytest` and `unittest` systems.
+---
+
+## 8. Verification & Testing
+
+### Running Tests
+Execute the pytest suite (covering 30 test cases) verifying all parsers, scanners, and reporters:
 ```bash
-# Run pytest on the tests directory
 python -m pytest tests/ -v
 ```
 
+---
+
 ## 9. Disclaimer
-This tool is provided as-is for security analysis. While it helps identify common supply chain vulnerabilities, it should not be relied upon as the sole security solution. Always perform manual security reviews and follow industry best practices.
+This tool is provided as-is for security analysis. While it detects common supply chain vulnerabilities, it should not be relied upon as the sole security solution. Always perform manual security reviews and follow industry best practices.
+
