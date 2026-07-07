@@ -41,7 +41,7 @@ PHASE 1: PARSE     -->     PHASE 1.5: GRAPH     -->     PHASE 2: SCAN     -->   
 
 #### `analyzer/main.py`
 This is where everything starts. The `main()` function:
-- Sets up the CLI argument parser with all flags (`-f`, `-d`, `--scan-secrets`, `--graph`, `--dashboard`, etc.)
+- Sets up the CLI argument parser with all flags (`-f`, `-d`, `--scan-secrets`, `--graph`, `--dashboard`, `--no-cicd`, etc.)
 - Detects the file type and calls the right parser
 - Builds the dependency graph
 - Runs each scanner in order
@@ -239,15 +239,15 @@ Sample Node.js `package.json` file for demo/testing.
 Uses `pytest`. Three test files:
 
 #### `test_parsers.py`
-Tests all 4 parsers — creates temporary files with sample content, parses them, and asserts the output structure and values.
+Tests Python and npm parsers, dependency graph building, and JSON reporter functionality.
 
 #### `test_scanners.py`
-Tests core scanners (vulnerability, typosquatting, secrets) with mocked inputs and expected outputs.
+Tests the core scanners: vulnerability scanner (including GraphQL API mocking, caching, and version matching), typosquatting detector, and secrets scanner.
 
 #### `test_scanners_extended.py`
-Tests the newer scanners (license, dependency confusion, pipeline, version analyzer) and the dependency graph builder.
+Tests Ruby and Maven parsers, dependency graph blast radius tracing, version staleness, license compliance, dependency confusion, CI/CD pipeline auditing, and CLI argument behaviors (like `--no-cicd`).
 
-Total: 29 test cases.
+Total: 35 test cases.
 
 ---
 

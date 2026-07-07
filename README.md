@@ -245,7 +245,7 @@ supply-chain-analyzer/
 
 ## Testing
 
-30 test cases covering all parsers, scanners, and reporters:
+35 test cases covering all CLI scenarios, parsers, scanners, and reporters:
 
 ```bash
 # Run full test suite
