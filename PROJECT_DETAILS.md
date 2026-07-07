@@ -249,6 +249,24 @@ Tests Ruby and Maven parsers, dependency graph blast radius tracing, version sta
 
 Total: 35 test cases.
 
+#### How to Run the Tests
+
+To run the automated test suite, use the following commands:
+
+```bash
+# Run all 35 test cases
+python -m pytest tests/ -v
+
+# Run only core scanner tests (vulnerability, typosquatting, secrets)
+python -m pytest tests/test_scanners.py -v
+
+# Run only parser, graph, and reporter tests
+python -m pytest tests/test_parsers.py -v
+
+# Run only extended scanners and CLI argument tests
+python -m pytest tests/test_scanners_extended.py -v
+```
+
 ---
 
 ### Configuration Files
