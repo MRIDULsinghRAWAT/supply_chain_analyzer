@@ -114,7 +114,7 @@ scan-deps -d /path/to/your/project --scan-secrets --scan-git
 
 ```
 scan-deps [-h] [-f FILE] [-d DIRECTORY] [-o OUTPUT]
-          [--scan-secrets] [--scan-git] [--no-vuln] [--no-typo]
+          [--scan-secrets] [--scan-git] [--no-vuln] [--no-typo] [--no-cicd]
           [--graph] [--graph-depth DEPTH] [--dashboard]
 
   -f, --file FILE           Dependency manifest file (requirements.txt, package.json, Gemfile, pom.xml)
@@ -124,6 +124,7 @@ scan-deps [-h] [-f FILE] [-d DIRECTORY] [-o OUTPUT]
   --scan-git                Scan git commit history for leaked secrets
   --no-vuln                 Skip vulnerability scanning
   --no-typo                 Skip typosquatting detection
+  --no-cicd                 Skip CI/CD pipeline security scanning
   --graph                   Show dependency tree visualization
   --graph-depth DEPTH       Limit tree depth (default: unlimited)
   --dashboard               Show terminal security dashboard

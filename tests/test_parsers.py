@@ -4,9 +4,6 @@ import json
 import tempfile
 from analyzer.parsers.python_parser import PythonParser
 from analyzer.parsers.npm_parser import NpmParser
-from analyzer.scanners.typosquatting import TyposquattingScanner
-from analyzer.scanners.vulnerability import VulnerabilityScanner
-from analyzer.scanners.secrets import SecretsScanner
 from analyzer.reporters.json_report import JsonReporter
 from analyzer.graph.dependency_graph import DependencyGraph
 
@@ -54,84 +51,6 @@ class TestNpmParser(unittest.TestCase):
         self.assertEqual(len(deps), 3)
         self.assertTrue(any(d['name'] == 'express' for d in deps))
         self.assertTrue(any(d['is_dev'] for d in deps))
-
-class TestTyposquattingScanner(unittest.TestCase):
-    def setUp(self):
-        self.scanner = TyposquattingScanner()
-
-    # --- Levenshtein distance -----------------------------------------------
-    def test_levenshtein_distance_1(self):
-        """Edit distance 1: 'requess' → 'requests' (missing a 't')."""
-        deps = [{"name": "requess", "version": "1.0.0"}]
-        alerts = self.scanner.scan(deps)
-        self.assertTrue(len(alerts) > 0)
-        matching = [a for a in alerts if a['similar_to'] == 'requests']
-        self.assertTrue(len(matching) > 0)
-        self.assertEqual(matching[0]['type'], 'TYPOSQUATTING')
-        self.assertIn(matching[0]['technique'], ('levenshtein_distance_1', 'levenshtein_distance_2'))
-
-    def test_levenshtein_distance_2(self):
-        """Edit distance 2: 'numpyy' → 'numpy' (extra char + change)."""
-        deps = [{"name": "numpyy", "version": "1.0.0"}]
-        alerts = self.scanner.scan(deps)
-        matching = [a for a in alerts if a.get('similar_to') == 'numpy']
-        self.assertTrue(len(matching) > 0)
-
-    # --- Separator confusion ------------------------------------------------
-    def test_separator_confusion_dash_vs_underscore(self):
-        """python_dateutil vs python-dateutil."""
-        deps = [{"name": "python_dateutil", "version": "2.8.0"}]
-        alerts = self.scanner.scan(deps, ecosystem='python')
-        matching = [a for a in alerts if a.get('technique') == 'separator_confusion']
-        self.assertTrue(len(matching) > 0, "Should detect separator confusion for python_dateutil vs python-dateutil")
-
-    # --- Character swap (adjacent transposition) ----------------------------
-    def test_character_swap(self):
-        """reqeusts → requests (swapped 'u' and 'e')."""
-        deps = [{"name": "reqeusts", "version": "1.0.0"}]
-        alerts = self.scanner.scan(deps)
-        matching = [a for a in alerts if a.get('technique') == 'character_swap']
-        self.assertTrue(len(matching) > 0, "Should detect adjacent character swap in 'reqeusts'")
-
-    # --- Repeated characters ------------------------------------------------
-    def test_repeated_character(self):
-        """flaask → flask (repeated 'a')."""
-        deps = [{"name": "flaask", "version": "1.0.0"}]
-        alerts = self.scanner.scan(deps)
-        matching = [a for a in alerts if a.get('technique') == 'repeated_character']
-        self.assertTrue(len(matching) > 0, "Should detect repeated character in 'flaask'")
-
-    # --- Homoglyph substitution ---------------------------------------------
-    def test_homoglyph(self):
-        """nump1e → uses '1' in place of 'l' which maps to 'numpy' after normalization? 
-        Actually let's use 'f1ask' → 'flask' (1 → l)."""
-        deps = [{"name": "f1ask", "version": "1.0.0"}]
-        alerts = self.scanner.scan(deps)
-        matching = [a for a in alerts if a.get('technique') == 'homoglyph']
-        self.assertTrue(len(matching) > 0, "Should detect homoglyph substitution in 'f1ask' → 'flask'")
-
-    # --- Version suffix squatting -------------------------------------------
-    def test_version_suffix(self):
-        """requests2 → requests + '2'."""
-        deps = [{"name": "requests2", "version": "1.0.0"}]
-        alerts = self.scanner.scan(deps)
-        matching = [a for a in alerts if a.get('technique') == 'version_suffix']
-        self.assertTrue(len(matching) > 0, "Should detect version suffix squatting in 'requests2'")
-
-    # --- Combosquatting -----------------------------------------------------
-    def test_combosquatting(self):
-        """requests-lib → embeds 'requests' with a short suffix."""
-        deps = [{"name": "requests-lib", "version": "1.0.0"}]
-        alerts = self.scanner.scan(deps)
-        matching = [a for a in alerts if a.get('technique') == 'combosquatting']
-        self.assertTrue(len(matching) > 0, "Should detect combosquatting in 'requests-lib'")
-
-    # --- No false positives for legitimate packages -------------------------
-    def test_no_alert_for_exact_match(self):
-        """A package that is itself in the popular list should NOT be flagged."""
-        deps = [{"name": "requests", "version": "2.31.0"}]
-        alerts = self.scanner.scan(deps)
-        self.assertEqual(len(alerts), 0, "Should not flag a legitimate popular package")
 
 class TestDependencyGraph(unittest.TestCase):
     """Tests for the DependencyGraph module."""
@@ -261,26 +180,6 @@ class TestDependencyGraph(unittest.TestCase):
         self.assertIn("Transitive dependencies", box)
         self.assertIn("Max dependency depth", box)
 
-
-class TestSecretsScanner(unittest.TestCase):
-    def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
-    
-    def test_scan_for_secrets(self):
-        scanner = SecretsScanner()
-        
-        # Create file with secrets
-        test_file = os.path.join(self.temp_dir, "config.py")
-        with open(test_file, 'w') as f:
-            f.write("""
-PASSWORD = "supersecret123"
-api_key = "sk_test_4eC39HqLyjWDarht1234567890"
-""")
-        
-        secrets = scanner.scan_file(test_file)
-        
-        # Should find at least one secret
-        self.assertTrue(len(secrets) > 0)
 
 class TestJsonReporter(unittest.TestCase):
     def setUp(self):

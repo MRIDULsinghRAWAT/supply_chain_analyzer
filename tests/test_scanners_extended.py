@@ -2,6 +2,8 @@ import unittest
 import tempfile
 import os
 from xml.etree import ElementTree as ET
+from unittest.mock import patch
+from analyzer.main import main
 
 from analyzer.parsers.ruby_parser import RubyParser
 from analyzer.parsers.maven_parser import MavenParser
@@ -234,3 +236,61 @@ class TestDependencyGraphBlastRadius(unittest.TestCase):
         # Unconnected package returns empty
         path_missing = graph.find_path_to("non-existent")
         self.assertEqual(path_missing, [])
+
+
+class TestCLIArguments(unittest.TestCase):
+    def setUp(self):
+        self.mock_report_data = {
+            "metadata": {"security_score": 100, "version": "1.1.0", "generated_at": "2026-07-07T21:30:00Z"},
+            "summary": {
+                "total_dependencies": 0,
+                "vulnerabilities_found": 0,
+                "typosquatting_alerts": 0,
+                "secrets_found": 0,
+                "licenses_found": 0,
+                "dep_confusion_issues": 0,
+                "pipeline_issues": 0,
+                "versions_outdated": 0,
+                "severity_breakdown": {
+                    "CRITICAL": 0,
+                    "HIGH": 0,
+                    "MEDIUM": 0,
+                    "LOW": 0
+                }
+            },
+            "dependencies": [],
+            "vulnerabilities": [],
+            "typosquatting": [],
+            "secrets": [],
+            "license": [],
+            "dep_confusion": [],
+            "pipeline": [],
+            "version_analysis": [],
+            "recommendations": []
+        }
+
+    @patch('sys.argv', ['scan-deps', '-f', 'data/example_requirements.txt', '--no-cicd'])
+    @patch('analyzer.main.PipelineScanner')
+    @patch('analyzer.main.ConsoleReporter')
+    @patch('analyzer.main.JsonReporter')
+    @patch('analyzer.main.PythonParser')
+    def test_no_cicd_skips_pipeline_scanner(self, mock_parser, mock_json_reporter, mock_console_reporter, mock_pipeline_scanner):
+        mock_parser.return_value.parse.return_value = []
+        mock_json_reporter.return_value.report_data = self.mock_report_data
+        mock_json_reporter.return_value.get_json_dict.return_value = self.mock_report_data
+        main()
+        # Verify PipelineScanner was NOT instantiated
+        mock_pipeline_scanner.assert_not_called()
+
+    @patch('sys.argv', ['scan-deps', '-f', 'data/example_requirements.txt'])
+    @patch('analyzer.main.PipelineScanner')
+    @patch('analyzer.main.ConsoleReporter')
+    @patch('analyzer.main.JsonReporter')
+    @patch('analyzer.main.PythonParser')
+    def test_cicd_runs_by_default(self, mock_parser, mock_json_reporter, mock_console_reporter, mock_pipeline_scanner):
+        mock_parser.return_value.parse.return_value = []
+        mock_json_reporter.return_value.report_data = self.mock_report_data
+        mock_json_reporter.return_value.get_json_dict.return_value = self.mock_report_data
+        main()
+        # Verify PipelineScanner was instantiated
+        mock_pipeline_scanner.assert_called_once()

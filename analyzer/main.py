@@ -35,6 +35,7 @@ def main():
     parser.add_argument('--scan-git', action='store_true', help="Scan git history for secrets")
     parser.add_argument('--no-vuln', action='store_true', help="Skip vulnerability scanning")
     parser.add_argument('--no-typo', action='store_true', help="Skip typosquatting scanning")
+    parser.add_argument('--no-cicd', action='store_true', help="Skip CI/CD pipeline security scanning")
     parser.add_argument('--graph', action='store_true', help="Show dependency graph visualization")
     parser.add_argument('--graph-depth', type=int, default=None, help="Max depth for graph tree (default: unlimited)")
     parser.add_argument('--dashboard', action='store_true', help="Show terminal security dashboard")
@@ -285,7 +286,7 @@ def main():
         json_reporter.add_dep_confusion_alerts(dc_alerts)
 
     # CI/CD Pipeline Security Scanner
-    if args.directory or args.file:
+    if not args.no_cicd and (args.directory or args.file):
         pipeline_scanner = PipelineScanner()
         reporter.print_header("Scanning CI/CD Pipelines")
         scan_dir = args.directory or (os.path.dirname(args.file) if args.file else '.')
